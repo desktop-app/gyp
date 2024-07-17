@@ -254,7 +254,7 @@ class MsvsSettings(object):
   def GetVSMacroEnv(self, base_to_build=None, config=None):
     """Get a dict of variables mapping internal VS macro names to their gyp
     equivalents."""
-    target_platform = 'Win32' if self.GetArch(config) == 'x86' else 'x64'
+    target_platform = 'ARM64' if self.GetArch(config) == 'ARM64' else 'Win32' if self.GetArch(config) == 'x86' else 'x64'
     target_name = self.spec.get('product_prefix', '') + \
         self.spec.get('product_name', self.spec['target_name'])
     target_dir = base_to_build + '\\' if base_to_build else ''
@@ -311,13 +311,13 @@ class MsvsSettings(object):
 
   def GetArch(self, config):
     """Get architecture based on msvs_configuration_platform and
-    msvs_target_platform. Returns either 'x86' or 'x64'."""
+    msvs_target_platform. Returns either 'x86' or 'x64' or 'ARM64'."""
     configuration_platform = self.msvs_configuration_platform.get(config, '')
     platform = self.msvs_target_platform.get(config, '')
     if not platform: # If no specific override, use the configuration's.
       platform = configuration_platform
     # Map from platform to architecture.
-    return {'Win32': 'x86', 'x64': 'x64'}.get(platform, 'x86')
+    return {'Win32': 'x86', 'x64': 'x64', 'ARM64': 'ARM64'}.get(platform, 'x86')
 
   def _TargetConfig(self, config):
     """Returns the target-specific configuration."""
@@ -331,10 +331,15 @@ class MsvsSettings(object):
     # override for the global one. |config| is remapped here to take into
     # account the local target-specific overrides to the global configuration.
     arch = self.GetArch(config)
-    if arch == 'x64' and not config.endswith('_x64'):
-      config += '_x64'
-    if arch == 'x86' and config.endswith('_x64'):
-      config = config.rsplit('_', 1)[0]
+    base = config
+    if config.endswith('_x64') or config.endswith('_ARM64'):
+      base = config.rsplit('_', 1)[0]
+    if arch == 'x64':
+      config = base + '_x64'
+    elif arch == 'ARM64':
+      config = base + '_ARM64'
+    elif arch == 'x86':
+      config = base
     return config
 
   def _Setting(self, path, config,
@@ -543,7 +548,7 @@ class MsvsSettings(object):
     libflags.extend(self._GetAdditionalLibraryDirectories(
         'VCLibrarianTool', config, gyp_to_build_path))
     lib('LinkTimeCodeGeneration', map={'true': '/LTCG'})
-    lib('TargetMachine', map={'1': 'X86', '17': 'X64', '3': 'ARM'},
+    lib('TargetMachine', map={'1': 'X86', '17': 'X64', '3': 'ARM', '4': 'ARM64'},
         prefix='/MACHINE:')
     lib('AdditionalOptions')
     return libflags
@@ -588,7 +593,7 @@ class MsvsSettings(object):
                           'VCLinkerTool', append=ldflags)
     self._GetDefFileAsLdflags(ldflags, gyp_to_build_path)
     ld('GenerateDebugInformation', map={'true': '/DEBUG'})
-    ld('TargetMachine', map={'1': 'X86', '17': 'X64', '3': 'ARM'},
+    ld('TargetMachine', map={'1': 'X86', '17': 'X64', '3': 'ARM', '4': 'ARM64'},
        prefix='/MACHINE:')
     ldflags.extend(self._GetAdditionalLibraryDirectories(
         'VCLinkerTool', config, gyp_to_build_path))
@@ -883,7 +888,7 @@ class MsvsSettings(object):
                  ('iid', iid),
                  ('proxy', proxy)]
     # TODO(scottmg): Are there configuration settings to set these flags?
-    target_platform = 'win32' if self.GetArch(config) == 'x86' else 'x64'
+    target_platform = 'ARM64' if self.GetArch(config) == 'ARM64' else 'win32' if self.GetArch(config) == 'x86' else 'x64'
     flags = ['/char', 'signed', '/env', target_platform, '/Oicf']
     return outdir, output, variables, flags
 
@@ -1041,7 +1046,7 @@ def GenerateEnvironmentFiles(toplevel_build_dir, generator_flags,
   meet your requirement (e.g. for custom toolchains), you can pass
   "-G ninja_use_custom_environment_files" to the gyp to suppress file
   generation and use custom environment files prepared by yourself."""
-  archs = ('x86', 'x64')
+  archs = ('x86', 'x64', 'ARM64')
   if generator_flags.get('ninja_use_custom_environment_files', 0):
     cl_paths = {}
     for arch in archs:

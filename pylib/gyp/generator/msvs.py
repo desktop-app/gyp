@@ -1904,6 +1904,8 @@ def _InitNinjaFlavor(params, target_list, target_dicts):
       configuration = '$(Configuration)'
       if params.get('target_arch') == 'x64':
         configuration += '_x64'
+      elif params.get('target_arch') == 'ARM64':
+        configuration += '_ARM64'
       spec['msvs_external_builder_out_dir'] = os.path.join(
           gyp.common.RelativePath(params['options'].toplevel_dir, gyp_dir),
           ninja_generator.ComputeOutputDir(params),
@@ -2684,6 +2686,8 @@ def _GetMSBuildGlobalProperties(spec, version, guid, gyp_file_name):
   if os.environ.get('PROCESSOR_ARCHITECTURE') == 'AMD64' or \
      os.environ.get('PROCESSOR_ARCHITEW6432') == 'AMD64':
     properties[0].append(['PreferredToolArchitecture', 'x64'])
+  elif os.environ.get('PROCESSOR_ARCHITECTURE') == 'ARM64':
+    properties[0].append(['PreferredToolArchitecture', 'ARM64'])
 
   if spec.get('msvs_target_platform_version'):
     target_platform_version = spec.get('msvs_target_platform_version')

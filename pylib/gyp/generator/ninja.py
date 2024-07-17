@@ -242,7 +242,7 @@ class NinjaWriter(object):
     if flavor == 'win':
       # See docstring of msvs_emulation.GenerateEnvironmentFiles().
       self.win_env = {}
-      for arch in ('x86', 'x64'):
+      for arch in ('x86', 'x64', 'ARM64'):
         self.win_env[arch] = 'environment.' + arch
 
     # Relative path from build output dir to base dir.
