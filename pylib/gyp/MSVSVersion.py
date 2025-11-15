@@ -273,7 +273,7 @@ def _CreateVersion(name, path, sdk_based=False):
                                   uses_vcxproj=True,
                                   path=path,
                                   sdk_based=sdk_based,
-                                  default_toolset='v145',
+                                  default_toolset='v143',
                                   compatible_sdks=['v8.1', 'v10.0']),
       '2022': VisualStudioVersion('2022',
                                   'Visual Studio 2022',
